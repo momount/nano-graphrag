@@ -46,6 +46,23 @@ from .base import (
     QueryParam,
 )
 
+from sentence_transformers import SentenceTransformer
+from nano_graphrag._utils import wrap_embedding_func_with_attrs
+import numpy as np
+WORKING_DIR = "./nano_graphrag_cache_deepseek_TEST"
+
+EMBED_MODEL = SentenceTransformer(
+    "sentence-transformers/all-MiniLM-L6-v2", cache_folder=WORKING_DIR, device="cpu"
+)
+
+# We're using Sentence Transformers to generate embeddings for the BGE model
+@wrap_embedding_func_with_attrs(
+    embedding_dim=EMBED_MODEL.get_sentence_embedding_dimension(),
+    max_token_size=EMBED_MODEL.max_seq_length,
+)
+async def local_embedding(texts: list[str]) -> np.ndarray:
+    return EMBED_MODEL.encode(texts, normalize_embeddings=True)
+
 
 @dataclass
 class GraphRAG:
@@ -54,7 +71,7 @@ class GraphRAG:
     )
     # graph mode
     enable_local: bool = True
-    enable_naive_rag: bool = False
+    enable_naive_rag: bool = True
 
     # text chunking
     chunk_func: Callable[
@@ -84,7 +101,7 @@ class GraphRAG:
     node_embedding_algorithm: str = "node2vec"
     node2vec_params: dict = field(
         default_factory=lambda: {
-            "dimensions": 1536,
+            "dimensions": 384,
             "num_walks": 10,
             "walk_length": 40,
             "num_walks": 10,
@@ -100,7 +117,7 @@ class GraphRAG:
     )
 
     # text embedding
-    embedding_func: EmbeddingFunc = field(default_factory=lambda: openai_embedding)
+    embedding_func: EmbeddingFunc = field(default_factory=lambda: local_embedding)
     embedding_batch_num: int = 32
     embedding_func_max_async: int = 16
     query_better_than_threshold: float = 0.2

@@ -1,17 +1,34 @@
 import os
 import logging
+import numpy as np
 from openai import AsyncOpenAI
 from nano_graphrag import GraphRAG, QueryParam
 from nano_graphrag import GraphRAG, QueryParam
 from nano_graphrag.base import BaseKVStorage
-from nano_graphrag._utils import compute_args_hash
+from nano_graphrag._utils import compute_args_hash, wrap_embedding_func_with_attrs
+from sentence_transformers import SentenceTransformer
+import ollama
 
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger("nano-graphrag").setLevel(logging.INFO)
 
-DEEPSEEK_API_KEY = "sk-XXXX"
+DEEPSEEK_API_KEY = "sk-9758d2466c824333a8f44bdc90a79e03"
 MODEL = "deepseek-chat"
 
+
+WORKING_DIR = "./nano_graphrag_cache_deepseek_TEST"
+
+EMBED_MODEL = SentenceTransformer(
+    "sentence-transformers/all-MiniLM-L6-v2", cache_folder=WORKING_DIR, device="cpu"
+)
+
+# We're using Sentence Transformers to generate embeddings for the BGE model
+@wrap_embedding_func_with_attrs(
+    embedding_dim=EMBED_MODEL.get_sentence_embedding_dimension(),
+    max_token_size=EMBED_MODEL.max_seq_length,
+)
+async def local_embedding(texts: list[str]) -> np.ndarray:
+    return EMBED_MODEL.encode(texts, normalize_embeddings=True)
 
 async def deepseepk_model_if_cache(
     prompt, system_prompt=None, history_messages=[], **kwargs
@@ -52,8 +69,6 @@ def remove_if_exist(file):
         os.remove(file)
 
 
-WORKING_DIR = "./nano_graphrag_cache_deepseek_TEST"
-
 
 def query():
     rag = GraphRAG(
@@ -61,11 +76,20 @@ def query():
         best_model_func=deepseepk_model_if_cache,
         cheap_model_func=deepseepk_model_if_cache,
     )
-    print(
-        rag.query(
-            "What are the top themes in this story?", param=QueryParam(mode="global")
-        )
-    )
+    # print(
+    #     rag.query(
+    #         "What are the top themes in this story?", param=QueryParam(mode="global")
+    #     )
+    # )
+    while True:
+        user_input = input("请输入内容 (输入 'exit' 退出程序): ")
+        query_mode = input("请输入查询模式 (输入 'local' 或 'global'): ")
+        if user_input.lower() == 'exit':
+            print("程序已退出。")
+            break
+        else:
+            print(f"您输入了: {user_input}\n输出结果：")
+            print(rag.query(f"{user_input}", param=QueryParam(mode=f"{query_mode}")))
 
 
 def insert():
@@ -85,6 +109,7 @@ def insert():
         enable_llm_cache=True,
         best_model_func=deepseepk_model_if_cache,
         cheap_model_func=deepseepk_model_if_cache,
+        embedding_func=local_embedding,
     )
     start = time()
     rag.insert(FAKE_TEXT)
@@ -95,4 +120,4 @@ def insert():
 
 if __name__ == "__main__":
     insert()
-    # query()
+    query()
