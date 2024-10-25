@@ -156,7 +156,7 @@ await graph_func.aquery(...)
 
 ### Available Parameters
 
-`GraphRAG` and `QueryParam` are `dataclass` in Python. Use `help(GraphRAG)` and `help(QueryParam)` to see all available parameters! 
+`GraphRAG` and `QueryParam` are `dataclass` in Python. Use `help(GraphRAG)` and `help(QueryParam)` to see all available parameters!  Or check out the [Advances](#Advances) section to see some options.
 
 
 
@@ -187,6 +187,17 @@ Below are the components you can use:
 - **Always welcome to contribute more components.**
 
 ## Advances
+
+
+
+<details>
+<summary>Some setup options</summary>
+
+- `GraphRAG(...,always_create_working_dir=False,...)` will skip the dir-creating step. Use it if you switch all your components to non-file storages.
+
+</details>
+
+
 
 <details>
 <summary>Only query the related context</summary>
@@ -347,6 +358,7 @@ You can replace all storage-related components to your own implementation, `nano
 **`base.BaseGraphStorage` for storing knowledge graph**
 
 - By default we use [`networkx`](https://github.com/networkx/networkx) as the backend.
+- We have a built-in `Neo4jStorage` for graph, check out this [tutorial](./docs/use_neo4j_for_graphrag.md).
 - `GraphRAG(.., graph_storage_cls=YOURS,...)`
 
 You can refer to `nano_graphrag.base` to see detailed interfaces for each components.
@@ -378,6 +390,15 @@ See [ROADMAP.md](./docs/ROADMAP.md)
 - [benchmark for English](./docs/benchmark-en.md)
 - [benchmark for Chinese](./docs/benchmark-zh.md)
 - [An evaluation](./examples/benchmarks/eval_naive_graphrag_on_multi_hop.ipynb) notebook on a [multi-hop RAG task](https://github.com/yixuantt/MultiHop-RAG)
+
+
+
+## Projects that used `nano-graphrag`
+
+- [Medical Graph RAG](https://github.com/MedicineToken/Medical-Graph-RAG): Graph RAG for the Medical Data
+- [LightRAG](https://github.com/HKUDS/LightRAG): Simple and Fast Retrieval-Augmented Generation
+
+> Welcome to pull requests if your project uses `nano-graphrag`, it will help others to trust this repo❤️
 
 
 
